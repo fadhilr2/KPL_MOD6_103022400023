@@ -1,10 +1,16 @@
-﻿public class SayaMusicTrack
+﻿using System.Diagnostics;
+using System.Diagnostics.Contracts;
+
+public class SayaMusicTrack
 {
     private int id;
     public string title;
     private int playCount;
     public SayaMusicTrack(string title)
     {
+
+        Debug.Assert(title != null, "Precondition gagal: judul track tidak boleh null");
+        Debug.Assert(title.Length <= 200, "Precondition gagal: karakter judul track tidak boleh lebih dari 200");
         this.title = title;
         this.playCount = 0;
 
@@ -15,10 +21,22 @@
     }
     public void increasePlayCount(int count)
     {
-        this.playCount = count;
+        Debug.Assert((count) <= 25000000, "Precondition gagal: input play count melebihi 25.000.000");
+        Debug.Assert(count > 0, "Precondition gagal: input play count tidak boleh negatif");
+        try
+        {
+            checked
+            {
+                this.playCount += count;
+            }
+        }
+        catch (OverflowException)
+        {
+            Console.WriteLine($"Gagal menambah {count} ke play count. Telah melebihi batas integer (overflow)");
+        }
     }
 
-    public void displayInfo()
+    public void printTrackDetails()
     {
         Console.WriteLine($"Track {id} Judul    : {title}");
     }
@@ -38,6 +56,9 @@ public class SayaMusicUser
 
     public SayaMusicUser(string username)
     {
+        Debug.Assert(username != null, "Precondition gagal: username tidak boleh null");
+        Debug.Assert(username.Length <= 100, "Precondition gagal: karakter username tidak boleh melebihi 100");
+
         this.Username = username;
         this.uploadedTracks = new List<SayaMusicTrack>();
         Random random = new Random();
@@ -46,15 +67,17 @@ public class SayaMusicUser
 
     public void addTrack(SayaMusicTrack track)
     {
+        Debug.Assert(track.getPlayCount() < int.MaxValue, "Precondition gagal: Playcount melebihi int.MAXVALUE atau lebih dari maksimal int");
         uploadedTracks.Add(track);
     }
 
-    public void displayPlaylist()
+    public void printAllTracks()
     {
         Console.WriteLine($"User: {Username}'s Playlist:");
+        Contract.Ensures(this.uploadedTracks.Count <= 8, "Postcondition gagal: jumlah track yang ditampilkan harus kurang dari 8");
         foreach (var track in uploadedTracks)
         {
-            track.displayInfo();
+            track.printTrackDetails();
         }
     }
 
@@ -79,7 +102,17 @@ class Program
 {
     static void Main(string[] args)
     {
-        SayaMusicUser user1 = new SayaMusicUser("Fadiil Rizky Akbar");
+        Console.WriteLine("TEST ASSERT");
+        //SayaMusicTrack track3 = new SayaMusicTrack("test");
+        //SayaMusicTrack track1 = new SayaMusicTrack("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        //SayaMusicTrack track2 = new SayaMusicTrack(null);
+        //track3.increasePlayCount(25000000+1);
+        //track3.increasePlayCount(-1);
+        //SayaMusicUser user2 = new SayaMusicUser("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        SayaMusicUser user1 = new SayaMusicUser("Fadil");
+        //track3 = new SayaMusicTrack("test");
+        //track3.increasePlayCount(2);
+        //user1.addTrack(track3);
 
         for (int i = 0; i < 10; i++)
         {
@@ -92,12 +125,14 @@ class Program
 
         List<SayaMusicTrack> uploadedTracks = user1.getUploadedTracks();
 
-        user1.displayPlaylist();
+        user1.printAllTracks();
         Console.WriteLine($"Total Play Count: {user1.getTotalPlayCount()}");
         Console.WriteLine();
         foreach (SayaMusicTrack track in uploadedTracks)
         {
             Console.WriteLine($"Review Lagu {track.title} oleh {user1.Username}");
         }
+        Console.WriteLine();
+
     }
 }
